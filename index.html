@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="jquery.3.6.4.js"></script>
+    <script src="bootstrap.min.js"></script>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <style>
+        .row {
+            margin-top: 20px;
+            padding: 10px;
+            box-shadow: 5px 10px 18px #888888;
+        }
+    </style>
+    <script>
+        var studentList = [];
+
+
+        function addStudent(id, email, firstName, middleName, lastName, address) {
+            var obj = { "id": id, "email": email, "firstName": firstName, "middleName": middleName, "lastName": lastName, "address": address }
+            const hit = studentList.find(s => s.id == id);
+            if (hit) {
+                return false;
+            }
+            studentList.push(obj);
+            return true;
+        }
+        // edit student based on student_id
+        function edit_student(student_id) {
+            // console.log('Edit me',id);
+            // get the student by id
+            const student = studentList.find(s => s.id == student_id);
+            if (!student) return false;
+            const { id, email, firstName, middleName, lastName, address } = student;
+            // load the data to fields
+            const _id = $("#idNumber");
+            _id.val(student_id);
+            _id.attr('readOnly', true);
+            const _email = $("#email");
+            _email.val(email);
+            const _firstName = $("#firstName");
+            _firstName.val(firstName);
+            const _middleName = $("#middleName");
+            _middleName.val(middleName);
+            const _lastName = $("#lastName");
+            _lastName.val(lastName);
+            const _address = $("#address");
+            _address.val(address);
+            //show update button and hide add student button
+            $("#addStudent").hide();
+            $("#updateStudent").show();
+        }
+
+        // delete student based on student_id
+
+        function delete_student(student_id) {
+            const student = studentList.find(s => s.id == student_id);
+            if (!student) return false;
+            const student_index = studentList.indexOf(student);
+            console.log(student_index);
+            // delete the student based on index
+            studentList.splice(student_index, 1);
+            render_table();
+        }
+        // update the student data based on id
+        function update_student_data(id, email, firstName, middleName, lastName, address) {
+            const student = studentList.find(s => s.id == id);
+            console.log("student", student ? "found" : "not found");
+            if (!student) return false;
+            console.log('updating student with id', id);
+            const student_index = studentList.indexOf(student);
+            console.log(student_index);
+            const student_obj = { "id": id, "email": email, "firstName": firstName, "middleName": middleName, "lastName": lastName, "address": address }
+            studentList[student_index] = student_obj;
+        }
+
+        function render_table(data = null) {
+
+            console.log('Loading data...')
+            const list_of_students = data ?? studentList;
+            // reset table before rendering to avoid duplicates
+            $("table > #table-content").html('')
+            for (const student of list_of_students) {
+                const table = $("table > #table-content");
+                const { id, email, firstName, middleName, lastName, address } = student;
+                const name = `${lastName}, ${firstName} ${middleName}`;
+                const data = `
+                <tr>
+                    <td>${id}</td>
+                    <td>${name}</td>
+                    <td>${email}</td>
+                    <td>${address}</td>
+                    <td>
+                        <input class="btn btn-warning" type="button" value="Edit" onclick="edit_student(${id})">
+                        <input class="btn btn-danger" type="button" value="Delete" onclick="delete_student('${id}')">
+                    </td>
+                </tr>
+                `;
+                table.append(data);
+            }
+        }
+
+        $(document).ready(() => {
+            //bind add student function
+            $("#addStudent").click(() => {
+                // fetch the form inputs
+                const id = $("#idNumber").val();
+                const email = $("#email").val();
+                const firstName = $("#firstName").val();
+                const middleName = $("#middleName").val();
+                const lastName = $("#lastName").val();
+                const address = $("#address").val();
+                const added = addStudent(id, email, firstName, middleName, lastName, address);
+                if (!added) {
+                    alert('ID must be unique');
+                    return false;
+                }
+                // reset the form
+                $("#studentForm").trigger("reset");
+                render_table();
+            })
+
+            // refresh table function
+            $("#refreshTable").click(() => {
+                $("#searchKey").val("");
+                render_table();
+            });
+
+            // add the edit feature
+            $("#updateStudent").click(() => {
+                const id = $("#idNumber").val();
+                const email = $("#email").val();
+                const firstName = $("#firstName").val();
+                const middleName = $("#middleName").val();
+                const lastName = $("#lastName").val();
+                const address = $("#address").val();
+                update_student_data(id, email, firstName, middleName, lastName, address);
+                render_table();
+                // clean the form and update the UI
+                $("#idNumber").attr('readOnly', false);
+                $("#studentForm").trigger("reset");
+                $("#updateStudent").hide();
+                $("#addStudent").show();
+            })
+            $("#search").click(() => {
+                const target_id = $("#searchKey").val();
+                const result = studentList.filter(student => student.id == target_id);
+                render_table(result);
+            })
+        })
+
+
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <form class="row g-3" id="studentForm">
+            <div class="col-6">
+                <label for="idNumber" class="form-label">ID Number</label>
+                <input type="text" class="form-control" id="idNumber">
+            </div>
+            <div class="col-md-6">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email">
+            </div>
+            <div class="col-4">
+                <label for="firstName" class="form-label">Firstname</label>
+                <input type="text" class="form-control" id="firstName">
+            </div>
+            <div class="col-4">
+                <label for="middleName" class="form-label">Middle Name</label>
+                <input type="text" class="form-control" id="middleName">
+            </div>
+            <div class="col-4">
+                <label for="lastName" class="form-label">Lastname</label>
+                <input type="text" class="form-control" id="lastName">
+            </div>
+            <div class="col-12">
+                <label for="address" class="form-label">Address</label>
+                <input type="text" class="form-control" id="address">
+            </div>
+            <div class="col-12">
+                <input class="btn btn-success" type="button" value="Update" id="updateStudent" style="display: none;">
+                <button type="button" class="btn btn-primary" id="addStudent">Add Student</button>
+            </div>
+        </form>
+        <div class="row">
+            <div class="d-flex justify-content-start col-sm-6 m-2">
+                <input class="form-control m-1" type="text" id="searchKey" placeholder="Search ID Number">
+                <input class="form-control m-1 btn btn-primary" type="button" id="search" value="Search">
+                <input class="form-control m-1 btn btn-success" type="button" id="refreshTable" value="Refresh Table">
+            </div>
+            <table class="table table-striped" id="">
+                <tbody>
+                    <thead>
+                        <tr>
+                            <th>ID Number</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Address</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                <tbody id="table-content">
+                </tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>
